@@ -100,7 +100,8 @@ impl<GT: NumBase> std::iter::Iterator for FloatRange<GT> {
 
 
 struct Graph<GT: Float> {
-
+    x: GT,
+    x_step: FloatRange<GT>
 }
 
 fn main() {
