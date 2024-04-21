@@ -2,8 +2,8 @@
 use std::{iter::Step, ops::{Add, AddAssign, Div, Mul, Range, Sub}};
 
 pub trait EzIntFns {
-    fn genZero() -> Self;
-    fn isZero(i: Self) -> bool;
+    fn gen_zero() -> Self;
+    fn is_zero(i: Self) -> bool;
     fn toZero(self);
 
     fn genOne() -> Self;
@@ -11,12 +11,16 @@ pub trait EzIntFns {
     fn toOne(self);
 }
 
+trait EzFloatFuncs {
+    fn sin(self) -> Self;
+}
+
 #[macro_export]
-macro_rules! one_zero_int {
+macro_rules! impl_int {
     ( $($t:ty), * ) => {  
             $(impl EzIntFns for $t {
-                fn genZero() -> Self {0}
-                fn isZero(i: Self) -> bool {if i == 0 {return true}; false}
+                fn gen_zero() -> Self {0}
+                fn is_zero(i: Self) -> bool {if i == 0 {return true}; false}
                 fn toZero(mut self) { self = 0 }
 
                 fn genOne() -> Self {1}
@@ -27,23 +31,41 @@ macro_rules! one_zero_int {
 }
 
 #[macro_export]
-macro_rules! one_zero_float {
+macro_rules! impl_float {
     ( $($t:ty), * ) => {  
             $(impl EzIntFns for $t {
-                fn genZero() -> Self {0.0}
-                fn isZero(i: Self) -> bool {if i == 0.0 {return true}; false}
+                fn gen_zero() -> Self {0.0}
+                fn is_zero(i: Self) -> bool {if i == 0.0 {return true}; false}
                 fn toZero(mut self) { self = 0.0 }
 
                 fn genOne() -> Self {1.0}
                 fn isOne(i: Self) -> bool {if i == 1.0 {return true}; false}
                 fn toOne(mut self) { self = 1.0 }
+            }
+            
+            impl EzFloatFuncs for $t {
+                fn sin(self) -> Self {
+                    self.sin()
+                }
+            }
+        )*
+    };
+}
+
+#[macro_export]
+macro_rules! default_numbase {
+    ( $($t:ty), * ) => {  
+            $(impl Default for $t {
+                fn default() -> Self {
+                    gen_zero()
+                }
             })*
     };
 }
 
 
-one_zero_int!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
-one_zero_float!(f32, f64);
+impl_int!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
+impl_float!(f32, f64);
 
 
 
@@ -64,7 +86,7 @@ trait NumBase =
 
 trait Int = NumBase + Step;
 
-trait Float = NumBase;
+trait Float = NumBase + EzFloatFuncs;
 
 struct FloatRange<GT: NumBase> {
     pub start: GT,
@@ -74,12 +96,12 @@ struct FloatRange<GT: NumBase> {
 }
 
 impl<GT: NumBase> FloatRange<GT> {
-    pub fn new(start: GT, end: GT, step: GT, sp: GT) -> Self {
+    pub fn new(start: GT, end: GT, step: GT) -> Self {
         Self {
             start,
             end,
             step,
-            cur: GT::genZero()
+            cur: start
         }
     }
 }
@@ -101,7 +123,19 @@ impl<GT: NumBase> std::iter::Iterator for FloatRange<GT> {
 
 struct Graph<GT: Float> {
     x: GT,
-    x_step: FloatRange<GT>
+    x_step: FloatRange<GT>,
+    test: GT
+}
+
+impl<GT: Float> Graph<GT> {
+    pub fn new(start: GT, end: GT, step: GT, test: GT) -> Self {
+
+        Self {
+            x: start,
+            x_step: FloatRange::new(start, end, step),
+            test
+        }
+    }
 }
 
 fn main() {
